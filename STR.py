@@ -1,7 +1,8 @@
 # STR Version 0.1.0
-# © Alex Ian Smith 2019
+# Alex Ian Smith 2019
 
 import sys
+from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5.QtWidgets import (QApplication, QPushButton, QWidget,
 QInputDialog, QLineEdit, QFileDialog, QSlider, QDialog, QVBoxLayout, QLabel,
 QGridLayout, QStatusBar, QToolButton, QHBoxLayout, QStyleFactory, QMainWindow,
@@ -55,7 +56,7 @@ class External(QThread):
 class App(QWidget):
 
     def onButtonClick(self, message):
-        # print(message)
+        # pass # print(message)
         self.calc = External()
         self.calc.messageChanged.connect(self.onMessageChanged)
         self.calc.status(message)
@@ -74,9 +75,12 @@ class App(QWidget):
         self.max_value)
 
     def recieveResults(self, data, fs):
-        self.onButtonClick('')
-        self.write_data = data
-        self.write_fs = fs
+        if len(data) == 0:
+            self.onButtonClick('Unknown error processing. Try again with different parameters')
+        else:
+            self.onButtonClick('')
+            self.write_data = data
+            self.write_fs = fs
 
     def __init__(self):
         super().__init__()
@@ -193,7 +197,7 @@ class App(QWidget):
         # Sliders
         # factor
         self.factorslider = QSlider(Qt.Horizontal)
-        self.factorslider.setMinimum(1)
+        self.factorslider.setMinimum(-100)
         self.factorslider.setMaximum(100)
         self.factorslider.setValue(1)
         self.factorslider.valueChanged.connect(self.factor)
@@ -291,8 +295,8 @@ class App(QWidget):
         min = int(self.maxslidermin.value())
         sec = float((self.maxslidersec.value())/100)
         self.max_value = (min + sec/60)
-        # print(self.max_value)
-        self.maxlabel.setText(f'Max Length:\n{str(min)} min {str(sec)} sec')
+        # pass # print(self.max_value)
+        self.maxlabel.setText(f"Max Length:\n{str(min)} min {str(sec)} sec")
         if self.max_value > 1.5:
             self.onButtonClick("Careful! more than a couple minutes can take A LOT of time and computer resources to process")
         else:
@@ -307,7 +311,7 @@ class App(QWidget):
             self.onButtonClick("Couldn't load wav file")
 
     def play(self):
-        # print(self.playbutton.isChecked())
+        # pass # print(self.playbutton.isChecked())
 
         if self.filename != 0:
             if self.playbutton.text() == 'Stop':
@@ -315,7 +319,7 @@ class App(QWidget):
                     self.onButtonClick('')
                     self.timer.cancel()
                 except:
-                    print("couldn't stop timer")
+                    pass # print("couldn't stop timer")
                 self.playbutton.setText('Play')
                 sd.stop()
                 # self.playbutton.toggle()
@@ -323,7 +327,7 @@ class App(QWidget):
                 try:
                     self.onButtonClick('Playing...')
                     l = (len(self.data) / self.fs)
-                    # print(f"{l} seconds")
+                    # pass # print(f"{l} seconds")
                     sd.play(self.data, self.fs)
                     self.playbutton.setText('Stop')
                     self.timer = threading.Timer(l, self.revert_playbutton)
@@ -340,7 +344,7 @@ class App(QWidget):
 
     def randomize(self):
         self.update()
-        self.f = random.uniform(1, 20)
+        self.f = random.uniform(-50, 50)
         self.b = random.uniform(0, 99000)
         self.o = random.uniform(0, 1000)
         self.s = random.uniform(0, 60)
@@ -361,7 +365,7 @@ class App(QWidget):
                 self.onButtonClick('')
                 self.ptimer.cancel()
             except:
-                print("couldn't stop timer")
+                pass # print("couldn't stop timer")
             self.previewbutton.setText('Preview')
             sd.stop()
             # self.playbutton.toggle()
@@ -369,7 +373,7 @@ class App(QWidget):
             try:
                 self.onButtonClick('Previewing...')
                 l = (len(self.write_data) / self.write_fs)
-                # print(f"{l} seconds")
+                # pass # print(f"{l} seconds")
                 sd.play(self.write_data, self.write_fs)
                 self.previewbutton.setText('Stop')
                 self.ptimer = threading.Timer(l, self.revert_previewbutton)
@@ -384,7 +388,7 @@ class App(QWidget):
         # try:
         #     sd.play(self.write_data, self.write_fs)
         # except:
-        #     print("couldn't preview")
+        #     pass # print("couldn't preview")
 
     def process(self):
         if self.start_value > self.end_value:
@@ -394,7 +398,7 @@ class App(QWidget):
             #     temp.append(self.data[indatalen - i - 1])
             # newstart = 99 - self.start_value
             # newend = 99 - self.end_value
-            # print(f"newend {newend}, newstart {newstart}")
+            # pass # print(f"newend {newend}, newstart {newstart}")
             # start_value = newstart
             # end_value = newend
             self.onButtonClick("Startpoint cannot be larger than Endpoint")
@@ -427,7 +431,7 @@ class App(QWidget):
         # base_dir = os.path.dirname(os.path.abspath(__file__))
         self.filename, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()","",home,"Wav Files (*.wav)")
         if self.filename:
-            print(self.filename)
+            pass # print(self.filename)
             self.open()
 
     def ReadMe(self):
@@ -464,16 +468,17 @@ class App(QWidget):
                 home = str(Path.home())
                 self.save_filename, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()","",home,"Wav Files (*.wav)")
                 if self.save_filename:
-                    print(self.save_filename)
+                    pass # print(self.save_filename)
                     self.save()
         except:
             self.onButtonClick("Nothing to save. Process something first")
 
 if __name__ == '__main__':
+    # appctxt = ApplicationContext()
     app = QApplication(sys.argv)
     base_dir = os.path.dirname(os.path.abspath(__file__))
     app.setWindowIcon(QIcon(base_dir + '/STR-icon.png'))
     ex = App()
-
+    # exit_code = appctxt.app.exec_()      # 2. Invoke appctxt.app.exec_()
     app.setStyle('Fusion')
-    sys.exit(app.exec_())
+    sys.exit(ApplicationContext().app.exec_())

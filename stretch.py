@@ -25,95 +25,142 @@ max):
     try:
         start = int((start_input * indatalen) / 100)
     except ValueError:
-        print("stretch: error calculating startpoint")
+        pass # print("stretch: error calculating startpoint")
     try:
         end = (float(end_input) * float(indatalen)) / 100
     except ValueError:
-        print("stretch: error calculating endpoint")
+        pass# pass # print("stretch: error calculating endpoint")
     try:
-        bufsize = int(float(bufsize) * float(indatalen)) / 100
+        bufsize = int(float(bufsize) * (end - start)) / 100
+        pass # print("bufsize", bufsize)
+        # bufsize = int(float(bufsize) * float(end - start))/20
     except:
-        print("stretch: error calculating bufsize")
+        pass # print("stretch: error calculating bufsize")
     try:
         max = infs * 60 * float(max)
-        print("MAX:", max)
+        pass # print("MAX:", max)
     except:
-        print("stretch: couldn't calculate max")
+        pass # print("stretch: couldn't calculate max")
     try:
-        offset = int(float(offset) * 1000)
+        offset = int(float(offset) * 10000)
         if offset > bufsize and bufsize > 0:
             offset = offset % bufsize
-            print("offset % bufsize")
+            print(offset)
+            pass # print("offset % bufsize")
         if offset > abs(end - start):
             offset = offset % abs(end - start)
-            print("offset % end - start")
+            print(offset)
+            pass # print("offset % end - start")
         if offset > max:
             offset = offset % max
-            print("offset % max")
+            print(offset)
+            pass # print("offset % max")
         else:
             offset = offset
+            print(offset)
+            pass # print("offset=offset")
     except:
-        print("stretch:couldn't calculate offset")
+        pass # print("stretch:couldn't calculate offset")
 
     # create temp buffers
     temp = []
 
-    print("processing...")
+    pass # print("processing...")
     # main loop
+    negfact = 0
     try:
+        if factor == 0:
+            factor = 1
+        if factor < 0:
+            factor = abs(factor)
+            negfact = 1 # Negative Factor
+
         # with loop buffer
         if bufsize > 0:
             for i in range(int(start), int(end)):
+                print(int(end))
+
                 for j in range(int(factor)):
                     for k in range(int(bufsize)):
                         if i + k < int(end):
-                            try:
-                                temp.append(indata[i + k])
-                            except:
-                                print(i, k, (i+k))
-                                print("stretch:error: can't append?")
-                            else:
-                                temp.append(indata[i])
+                            if k > 10:
+                                try:
+                                    temp.append(indata[i + k])
+                                except:
+                                    pass # print(i, k, (i+k))
+                                    pass # print("stretch:error: can't append?")
+                            elif len(temp) > 0:
+                                # pass # print(len(temp))
+                                a = temp[-1]
+                                # pass # print(a)
+                                b = indata[i + k]
+                                temp.append((a+b)/2)
+                        # else:
+                        #     temp.append(indata[i])
+                        if negfact == 1:
                             if i + int(offset) < int(end):
-                                i = i + int(offset)
+                                i = abs(i + int(offset))
+                                print(i)
                             else:
-                                i = int(offset) - i
-                    # break from loop when max reached
-                    # there should be a better way to do this...
+                                break
+                            # else:
+                            #     i = abs(int(offset) - i)
+                            #     print(i)
+                            if i >= int(end):
+                                break
+                        if i >= int(end):
+                            break
+                    if negfact == 0:
+                        if i + int(offset) < int(end):
+                            i = abs(i + int(offset))
+                            print(i)
+                        else:
+                            break
+                        # else:
+                        #     i = abs(int(offset) - i)
+                        #     print(i)
+                    if i >= int(end):
+                        break
                     if len(temp) >= max:
                         i = int(end)
                         k = int(bufsize)
                         j = int(factor)
-                        # print(f"i {i}. j {j}. k {k} max {max}. int(end) {int(end)}, len(temp {len(temp)})")
-                        # print("reached max!")
+                        # pass # print(f"i {i}. j {j}. k {k} max {max}. int(end) {int(end)}, len(temp {len(temp)})")
+                        # pass # print("reached max!")
                         break
                 if len(temp) >= max:
                     i = int(end)
                     k = int(bufsize)
                     j = int(factor)
-                    # print(f"i {i}. j {j}. k {k} max {max}. int(end) {int(end)}, len(temp {len(temp)})")
-                    # print("reached max!")
+                    # pass # print(f"i {i}. j {j}. k {k} max {max}. int(end) {int(end)}, len(temp {len(temp)})")
+                    # pass # print("reached max!")
                     break
         # no loop buffer
         else:
             for i in range(int(start), int(end)):
                 for j in range(int(factor)):
                     temp.append(indata[i])
+                    if negfact == 1:
+                        if i + int(offset) < int(end):
+                            i = i + int(offset)
+                        else:
+                            break
+                if negfact == 0:
                     if i + int(offset) < int(end):
                         i = i + int(offset)
                     else:
-                        break
+                        i = int(offset) - i
                 # break when max reached
                 if len(temp) >= max:
                     i = int(end)
                     j = int(factor)
-                    # print("lentemp after max reached", len(temp))
-                    # print("reached max!")
+                    # pass # print("lentemp after max reached", len(temp))
+                    # pass # print("reached max!")
                     break
 
-        print("stretch: done processing")
+        pass # print("stretch: done processing")
     except ValueError:
-        print("stretch: couldn't iterate")
+        pass # print("stretch: couldn't iterate")
         raise ValueError()
 
     # write to numpy array
@@ -121,9 +168,9 @@ max):
     try:
         processed = (np.asarray(temp, dtype="int16"))
     except:
-        print("stretch: couldn't write buffer to numpy")
-    print(f"{len(processed)} samples processed")
-    # print(type(processed))
+        pass # print("stretch: couldn't write buffer to numpy")
+    pass # print(f"{len(processed)} samples processed")
+    # pass # print(type(processed))
     return (processed, infs)
 
     # close and del buffers
@@ -132,4 +179,4 @@ max):
         del temp[:]
         del processed[:]
     except:
-        print("couldn't close/del buffers")
+        pass # print("couldn't close/del buffers")
