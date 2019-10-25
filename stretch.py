@@ -25,102 +25,116 @@ max):
     try:
         start = int((start_input * indatalen) / 100)
     except ValueError:
-        pass # print("stretch: error calculating startpoint")
+        print("stretch: error calculating startpoint")
     try:
         end = (float(end_input) * float(indatalen)) / 100
     except ValueError:
-        pass# pass # print("stretch: error calculating endpoint")
+        print("stretch: error calculating endpoint")
     try:
         bufsize = int(float(bufsize) * (end - start)) / 100
-        pass # print("bufsize", bufsize)
+        print("bufsize", bufsize)
         # bufsize = int(float(bufsize) * float(end - start))/20
     except:
-        pass # print("stretch: error calculating bufsize")
+        print("stretch: error calculating bufsize")
     try:
         max = infs * 60 * float(max)
-        pass # print("MAX:", max)
+        print("MAX:", max)
     except:
-        pass # print("stretch: couldn't calculate max")
+        print("stretch: couldn't calculate max")
     try:
         offset = int(float(offset) * 10000)
         if offset > bufsize and bufsize > 0:
             offset = offset % bufsize
-            print(offset)
-            pass # print("offset % bufsize")
+            # print(offset)
+            print("offset % bufsize")
         if offset > abs(end - start):
             offset = offset % abs(end - start)
-            print(offset)
-            pass # print("offset % end - start")
+            # print(offset)
+            print("offset % end - start")
         if offset > max:
             offset = offset % max
-            print(offset)
-            pass # print("offset % max")
+            # print(offset)
+            print("offset % max")
         else:
             offset = offset
-            print(offset)
-            pass # print("offset=offset")
+            # print(offset)
+            print("offset=offset")
     except:
-        pass # print("stretch:couldn't calculate offset")
+        print("stretch:couldn't calculate offset")
+
+    if bufsize > max:
+        try:
+            bufsize = (bufsize % max)
+            print("bufsize looped w/ modulo")
+        except:
+            print("bufsize too big?")
+
 
     # create temp buffers
     temp = []
 
-    pass # print("processing...")
+    print("processing...")
     # main loop
     negfact = 0
+    smoothbuf = int(bufsize/128)
     try:
         if factor == 0:
             factor = 1
         if factor < 0:
             factor = abs(factor)
-            negfact = 1 # Negative Factor
+            negfact = 1 # Negative Factor Flag
 
         # with loop buffer
         if bufsize > 0:
             for i in range(int(start), int(end)):
-                print(int(end))
 
                 for j in range(int(factor)):
+
                     for k in range(int(bufsize)):
+
                         if i + k < int(end):
-                            if k > 10:
+                            if k > smoothbuf:
                                 try:
                                     temp.append(indata[i + k])
                                 except:
-                                    pass # print(i, k, (i+k))
-                                    pass # print("stretch:error: can't append?")
+                                    print(i, k, (i+k))
+                                    print("stretch:error appending indata[i+k]")
                             elif len(temp) > 0:
                                 # pass # print(len(temp))
-                                a = temp[-1]
+                                try:
+                                    z = (1 + k)
+                                except:
+                                    print("couldn't calculate z")
+                                a = temp[-1] # previously written sample
                                 # pass # print(a)
-                                b = indata[i + k]
-                                temp.append((a+b)/2)
+                                try:
+                                    b = indata[i + k]
+                                except:
+                                    print("couldn't calculate b")
+                                try:
+                                    c = ((a-b)/smoothbuf)
+                                except:
+                                    print("couldn't calculate c")
+                                d = (smoothbuf - z)
+                                try:
+                                    temp.append(c * d + b)
+                                    # print(f"{a} + {b} /2 + {c} =", int(a+b)/2 + c)
+                                except:
+                                    print("error appending smooth buffer")
+
                         # else:
                         #     temp.append(indata[i])
                         if negfact == 1:
                             if i + int(offset) < int(end):
-                                i = abs(i + int(offset))
-                                print(i)
+                                i = i + int(offset)
                             else:
-                                break
-                            # else:
-                            #     i = abs(int(offset) - i)
-                            #     print(i)
-                            if i >= int(end):
-                                break
-                        if i >= int(end):
-                            break
+                                i = int(offset) - i
                     if negfact == 0:
                         if i + int(offset) < int(end):
-                            i = abs(i + int(offset))
-                            print(i)
+                            i = i + int(offset)
                         else:
-                            break
-                        # else:
-                        #     i = abs(int(offset) - i)
-                        #     print(i)
-                    if i >= int(end):
-                        break
+                            i = int(offset) - i
+
                     if len(temp) >= max:
                         i = int(end)
                         k = int(bufsize)
@@ -158,18 +172,24 @@ max):
                     # pass # print("reached max!")
                     break
 
-        pass # print("stretch: done processing")
-    except ValueError:
-        pass # print("stretch: couldn't iterate")
-        raise ValueError()
+        print("stretch: done processing")
+    except:
+        print("stretch: couldn't iterate")
+
+        # raise ValueError()
+        # print(ValueError())
+        # pass
 
     # write to numpy array
     processed = []
     try:
+        print("writing to 'processed'")
         processed = (np.asarray(temp, dtype="int16"))
     except:
-        pass # print("stretch: couldn't write buffer to numpy")
-    pass # print(f"{len(processed)} samples processed")
+        print("couldn't write array")
+        pass
+    # print("stretch: couldn't write buffer to numpy")
+    print(f"{len(processed)} samples processed")
     # pass # print(type(processed))
     return (processed, infs)
 

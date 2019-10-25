@@ -2,7 +2,6 @@
 # Alex Ian Smith 2019
 
 import sys
-from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5.QtWidgets import (QApplication, QPushButton, QWidget,
 QInputDialog, QLineEdit, QFileDialog, QSlider, QDialog, QVBoxLayout, QLabel,
 QGridLayout, QStatusBar, QToolButton, QHBoxLayout, QStyleFactory, QMainWindow,
@@ -474,11 +473,10 @@ class App(QWidget):
             self.onButtonClick("Nothing to save. Process something first")
 
 if __name__ == '__main__':
-    # appctxt = ApplicationContext()
     app = QApplication(sys.argv)
     base_dir = os.path.dirname(os.path.abspath(__file__))
     app.setWindowIcon(QIcon(base_dir + '/STR-icon.png'))
     ex = App()
-    # exit_code = appctxt.app.exec_()      # 2. Invoke appctxt.app.exec_()
+
     app.setStyle('Fusion')
-    sys.exit(ApplicationContext().app.exec_())
+    sys.exit(app.exec_())
