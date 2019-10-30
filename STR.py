@@ -5,10 +5,13 @@ import sys
 from PyQt5.QtWidgets import (QApplication, QPushButton, QWidget,
 QInputDialog, QLineEdit, QFileDialog, QSlider, QDialog, QVBoxLayout, QLabel,
 QGridLayout, QStatusBar, QToolButton, QHBoxLayout, QStyleFactory, QMainWindow,
-QProgressBar)
+QProgressBar, QSizePolicy)
 from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtCore import *
 from PyQt5.QtCore import QThread, pyqtSignal
+from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
+from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
 import math
 import random
 from pathlib import Path
@@ -44,13 +47,12 @@ class Process_function(QThread):
         self.stretch_results.emit(write_data, write_fs)
 
 class External(QThread):
-    """
-    Runs a counter thread.
-    """
+
     messageChanged = pyqtSignal(str)
 
     def status(self, message):
         self.messageChanged.emit(message)
+
 
 class App(QWidget):
 
@@ -76,6 +78,8 @@ class App(QWidget):
     def recieveResults(self, data, fs):
         if len(data) == 0:
             self.onButtonClick('Unknown error processing. Try again with different parameters')
+            self.write_data = data
+            self.write_fs = fs
         else:
             self.onButtonClick('')
             self.write_data = data
@@ -83,6 +87,7 @@ class App(QWidget):
 
     def __init__(self):
         super().__init__()
+
         self.title = 'STR'
         self.left = 200
         self.top = 200
@@ -113,6 +118,11 @@ class App(QWidget):
     #     self.setStatusBar(self.statusBar)
     #     self.statusbar().showMessage("Statusbar")
 
+    # def initWave(self):
+
+
+
+
     def initUI(self):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
@@ -129,8 +139,10 @@ class App(QWidget):
         self.layout.addWidget(self.randombutton, 12, 6)
         self.layout.addWidget(self.processbutton, 12, 7)
         self.layout.addWidget(self.previewbutton, 12, 8)
+        self.layout.addWidget(self.savewbutton, 12, 9)
         self.layout.addWidget(self.savebutton, 12, 10)
         self.layout.addWidget(self.aboutbutton, 12, 11)
+
 
         self.layout.addWidget(self.factorlabel, 0, 0, 1, 2)
         self.layout.addWidget(self.factorslider, 0, 2, 1, 10)
@@ -146,13 +158,39 @@ class App(QWidget):
         self.layout.addWidget(self.maxslidermin, 10, 2, 1, 10)
         self.layout.addWidget(self.maxslidersec, 11, 2, 1, 10)
 
+
         self.statuslabel = QLabel('')
-        self.layout.addWidget(self.statuslabel, 13, 2, 1, 10)
+        self.layout.addWidget(self.statuslabel, 54, 2, 1, 10)
+
+        self.static_canvas = FigureCanvas(Figure(figsize=(1200, 900), dpi=1200))
+        self.static_canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        self.static_canvas.updateGeometry()
+        self.layout.addWidget(self.static_canvas, 13, 2, 30, 10)
 
         self.setLayout(self.layout)
         self.update()
 
+
         self.show()
+
+    def plot(self, data):
+        # self.fig1 = plt.figure()
+        self.ax1 = self.static_canvas.figure.add_subplot(111, position=[0,0,1,1])
+        # self.ax1 = self.fig1.add_subplot(111, position=[0,0,1,1])
+        self.ax1.plot(data, '-k', linewidth=0.02)
+        self.ax1.plot(data, '-b', linewidth=0.0025)
+        self.ax1.plot(data, '-r', linewidth=0.00125)
+        self.ax1.axis('off')
+        self.ax1.tick_params(direction='in', width=0.1, axis='x', length=2, labelsize=0.1, labelleft=False, labelbottom=True, left=False, bottom=True)
+        self.ax1.margins(x=-0, y=0.05)
+
+        self.static_canvas.draw()
+
+        # self.fig1.show()
+
+    def clearPlot(self):
+        self.ax1.clear()
 
     def initbuttons(self):
         # buttons
@@ -187,6 +225,11 @@ class App(QWidget):
         self.savebutton = QPushButton("Save", self)
         self.savebutton.setToolTip('Saves to a new Wav file')
         self.savebutton.clicked.connect(self.saveFileDialog)
+
+        # save waveform
+        self.savewbutton = QPushButton("Save waveform", self)
+        self.savewbutton.setToolTip('Saves waveform to an image')
+        self.savewbutton.clicked.connect(self.savewfileDialog)
 
         # about
         self.aboutbutton = QPushButton("About", self)
@@ -303,11 +346,16 @@ class App(QWidget):
 
     def open(self):
         try:
+            self.clearPlot()
+        except:
+            print("nothing to clear")
+        try:
             self.data, self.fs = sf.read(self.filename, dtype='int16')
             self.filelabel.setText("File Loaded:\n" + ntpath.basename(self.filename))
             self.filelabel.setAlignment(Qt.AlignRight)
         except:
             self.onButtonClick("Couldn't load wav file")
+        self.plot(self.data)
 
     def play(self):
         # pass # print(self.playbutton.isChecked())
@@ -344,7 +392,7 @@ class App(QWidget):
     def randomize(self):
         self.update()
         self.f = random.uniform(-50, 50)
-        self.b = random.uniform(0, 99000)
+        self.b = random.uniform(0, 49000)
         self.o = random.uniform(0, 1000)
         self.s = random.uniform(0, 60)
         self.e = random.uniform(0, 99)
@@ -405,13 +453,16 @@ class App(QWidget):
 
             self.onButtonClick("Processing...   STR will be unresponsive until Process completes")
             self.processClick()
+            self.clearPlot()
             self.update()
-
+            self.plot(self.write_data)
+            self.update()
 
 
 
     def revert_processing(self):
         self.onButtonClick('')
+
 
     def save(self):
         try:
@@ -430,7 +481,7 @@ class App(QWidget):
         # base_dir = os.path.dirname(os.path.abspath(__file__))
         self.filename, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()","",home,"Wav Files (*.wav)")
         if self.filename:
-            pass # print(self.filename)
+            print(self.filename)
             self.open()
 
     def ReadMe(self):
@@ -459,6 +510,18 @@ class App(QWidget):
         self.aboutwindow.setWindowModality(Qt.ApplicationModal)
         self.aboutwindow.exec_()
 
+    def savewfileDialog(self):
+        # try:
+            home = str(Path.home())
+            self.save_wfilename, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()","",home,"Tif Files (*.tif)")
+            if self.save_wfilename:
+                fig1 = self.static_canvas.figure
+                fig1.savefig(self.save_wfilename, format="tif", dpi=1200)
+
+        # except:
+        #     print("couldn't save waveform")
+        #     self.onButtonClick("Couldn't save Waveform as image")
+
     def saveFileDialog(self):
         try:
             if self.write_fs:
@@ -467,7 +530,7 @@ class App(QWidget):
                 home = str(Path.home())
                 self.save_filename, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()","",home,"Wav Files (*.wav)")
                 if self.save_filename:
-                    pass # print(self.save_filename)
+                    # print(self.save_filename)
                     self.save()
         except:
             self.onButtonClick("Nothing to save. Process something first")
