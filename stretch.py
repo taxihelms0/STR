@@ -6,8 +6,8 @@ from scipy.io.wavfile import write
 import scipy.io.wavfile
 import os.path
 # import simpleaudio as sa
-import sounddevice as sd
-import soundfile as sf
+# import sounddevice as sd
+# import soundfile as sf
 # import wave
 import time
 import struct
@@ -71,12 +71,16 @@ max):
 
 
     # create temp buffers
+    # change this file. Let's do this.
     temp = []
 
     print("processing...")
     # main loop
     negfact = 0
     smoothbuf = int(bufsize/128)
+    if smoothbuf < 1 and bufsize == 0:
+        smoothbuf = 10
+        bufsize = 1
     try:
         if factor == 0:
             factor = 1
