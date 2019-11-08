@@ -355,7 +355,7 @@ class App(QWidget):
     def randomize(self):
         self.update()
         self.f = random.uniform(-50, 50)
-        self.b = random.uniform(0, 99000)
+        self.b = random.uniform(0, 49000)
         self.o = random.uniform(0, 1000)
         self.s = random.uniform(0, 60)
         self.e = random.uniform(0, 99)
@@ -364,7 +364,7 @@ class App(QWidget):
         self.bufslider.setValue(self.b)
         self.offsetslider.setValue(self.o)
         self.startslider.setValue(self.s)
-        self.e = random.uniform(self.startslider.value(), 99)
+        self.e = random.uniform((self.startslider.value() + 1), 99)
         self.endslider.setValue(self.e)
         self.update()
 

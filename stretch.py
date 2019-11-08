@@ -77,7 +77,9 @@ max):
     print("processing...")
     # main loop
     negfact = 0
-    smoothbuf = int(bufsize/128)
+    smoothbuf = int(bufsize/32)
+    if smoothbuf == 0:
+        smoothbuf = 1
     if smoothbuf < 1 and bufsize == 0:
         smoothbuf = 10
         bufsize = 1
