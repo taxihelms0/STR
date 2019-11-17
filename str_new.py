@@ -1,5 +1,21 @@
 # STR Version 0.1.0
-# Alex Ian Smith 2019
+# © Alex Ian Smith 2019
+#
+# License Notice:
+# This file is part of STR.
+#
+# STR is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# STR is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with STR.  If not, see <https://www.gnu.org/licenses/>.
 
 import sys
 from PyQt5.QtWidgets import (QApplication, QPushButton, QWidget, QPlainTextEdit,
@@ -447,9 +463,11 @@ class App(QWidget):
 
     def openFileNameDialog(self):
         # open dialog
-        home = str(Path.home())     # not sure if this works...
+        # home = str(Path.home())     # not sure if this works...
         # base_dir = os.path.dirname(os.path.abspath(__file__)) leaving this code in for future testing
         # call dialog & set selected file to self.filename
+        home = (os.path.expanduser('~'))
+        print(home)
         self.filename, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()","",home,"Wav Files (*.wav)")
         if self.filename:
             self.open()
@@ -457,7 +475,8 @@ class App(QWidget):
 
     def ReadMe(self):
         # opens readme in a text editor
-        os.system('open ReadMe.md')
+        # os.system('open ReadMe.md')
+        readme = R
 
     def aboutdialog(self):
         # opens a new window for about section
