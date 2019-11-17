@@ -127,7 +127,7 @@ class App(QWidget):
         self.layout.addWidget(self.maxslidersec, 3, 1)
         self.layout.addWidget(self.maxslidermin, 2, 1)
         self.layout.addWidget(self.maxlabel, 4, 1, 1, 2)
-        self.layout.addWidget(self.filelabel, 4, 2, 1, 4)
+        self.layout.addWidget(self.filelabel, 5, 2, 1, 4)
         self.layout.addWidget(self.openbutton, 5, 1)
         # self.layout.addWidget(self.randombutton, 13, 2)
         self.layout.addWidget(self.processbutton, 6, 1)
@@ -245,11 +245,11 @@ class App(QWidget):
         self.inputbox.setFixedWidth(self.colwidth)
         self.inputbox.textChanged.connect(self.processString)
         self.inputbox.setFocusPolicy(Qt.StrongFocus)
-        self.inputbox.editingFinished.connect(self.process)
+        self.inputbox.returnPressed.connect(self.process)
 
         # loaded filename display
         self.filelabel = QLabel('No File Loaded.')
-        self.filelabel.setAlignment(Qt.AlignRight)
+        self.filelabel.setAlignment(Qt.AlignLeft)
 
         # status
         self.statuslabel = QLabel('')
