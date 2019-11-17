@@ -2,11 +2,11 @@
 # Alex Ian Smith 2019
 
 import sys
-from PyQt5.QtWidgets import (QApplication, QPushButton, QWidget,
+from PyQt5.QtWidgets import (QApplication, QPushButton, QWidget, QPlainTextEdit,
 QInputDialog, QLineEdit, QFileDialog, QSlider, QDialog, QVBoxLayout, QLabel,
 QGridLayout, QStatusBar, QToolButton, QHBoxLayout, QStyleFactory, QMainWindow,
-QProgressBar)
-from PyQt5.QtGui import QIcon, QFont
+QShortcut)
+from PyQt5.QtGui import QIcon, QFont, QKeySequence
 from PyQt5.QtCore import *
 from PyQt5.QtCore import QThread, pyqtSignal
 import math
@@ -59,7 +59,7 @@ class App(QWidget):
     def processClick(self):
         app.processEvents()
         self.update()
-
+        self.processString()
         self.click = Process_function()
         self.click.stretch_results.connect(self.receiveResults)
         self.click.doit(self.data, self.fs, self.factor_value,
@@ -84,9 +84,10 @@ class App(QWidget):
         self.title = 'STR'
         self.left = 200
         self.top = 200
-        self.width = 800
+        self.width = 400
         self.height = 200
         self.colwidth = 110
+        # self.setFixedSize(self.width, self.height)
         self.initbuttons()
         self.initsliders()
         self.initUI()
@@ -104,42 +105,34 @@ class App(QWidget):
         self.end_value = 99
         self.max_value = 0.0165
         self.filename = 0
+        self.save_filename = 'untitled'
 
     def initUI(self):
         # initialize UI
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
+        # self.setFixedSize(self.width, self.height)
         self.layout = QGridLayout()     # establish layout
-        self.layout.setSpacing(10)      # set global spacing
-
-        # add buttons to layout
-
-        self.layout.addWidget(self.filelabel, 11, 0, 2, 2)
-        self.layout.addWidget(self.openbutton, 12, 2)
-        self.layout.addWidget(self.randombutton, 12, 6)
-        self.layout.addWidget(self.processbutton, 12, 7)
-        self.layout.addWidget(self.aboutbutton, 12, 11)
+        self.layout.setSpacing(12)      # set global spacing
 
         # add labels to Layout
-        self.layout.addWidget(self.factorlabel, 0, 0, 1, 2)
-        self.layout.addWidget(self.factorslider, 0, 2, 1, 10)
-        self.layout.addWidget(self.buflabel, 2, 0)
-        self.layout.addWidget(self.bufslider, 2, 2, 1, 10)
-        self.layout.addWidget(self.offsetlabel, 4, 0)
-        self.layout.addWidget(self.offsetslider, 4, 2, 1, 10)
-        self.layout.addWidget(self.startlabel, 6, 0)
-        self.layout.addWidget(self.startslider, 6, 2, 1, 10)
-        self.layout.addWidget(self.endlabel, 8, 0)
-        self.layout.addWidget(self.endslider, 8, 2, 1, 10)
-        self.layout.addWidget(self.maxlabel, 10, 0)
-        self.layout.addWidget(self.maxslidermin, 10, 2, 1, 10)
-        self.layout.addWidget(self.maxslidersec, 11, 2, 1, 10)
+        self.layout.addWidget(self.labelbox, 6, 2, 3, 4)
+        # self.layout.addWidget(self.factorlabel, 1, 3, 1, 3)
+        # self.layout.addWidget(self.buflabel, 2, 3, 1, 3)
+        # self.layout.addWidget(self.offsetlabel, 3, 3, 1, 3)
+        # self.layout.addWidget(self.startlabel, 4, 3, 1, 3)
+        # self.layout.addWidget(self.endlabel, 5, 3, 1, 3)
 
-        # add sliders to layout
-
-        self.statuslabel = QLabel('')
-        self.layout.addWidget(self.statuslabel, 13, 2, 1, 10)
-
+        self.layout.addWidget(self.inputbox, 1, 1)
+        self.layout.addWidget(self.maxslidersec, 3, 1)
+        self.layout.addWidget(self.maxslidermin, 2, 1)
+        self.layout.addWidget(self.maxlabel, 4, 1, 1, 2)
+        self.layout.addWidget(self.filelabel, 4, 2, 1, 4)
+        self.layout.addWidget(self.openbutton, 5, 1)
+        # self.layout.addWidget(self.randombutton, 13, 2)
+        self.layout.addWidget(self.processbutton, 6, 1)
+        self.layout.addWidget(self.aboutbutton, 7, 1)
+        self.layout.addWidget(self.statuslabel, 1, 2, 3, 4)
         self.setLayout(self.layout)
         self.update()
 
@@ -149,34 +142,42 @@ class App(QWidget):
         # initialize buttons
         # open
         self.openbutton = QPushButton("Open", self)
-        self.openbutton.setToolTip('Open a Wav file')
         self.openbutton.clicked.connect(self.openFileNameDialog)
+        self.openbutton.setFixedWidth(self.colwidth)
+
+        self.shortcut = QShortcut(QKeySequence("Ctrl+O"), self)
+        self.shortcut.activated.connect(self.openFileNameDialog)
 
         # random
-        self.randombutton = QPushButton("Random", self)
-        self.randombutton.setToolTip('Randomize settings')
-        self.randombutton.clicked.connect(self.randomize)
+        # self.randombutton = QPushButton("Random", self)
+        # self.randombutton.clicked.connect(self.randomize)
 
         # process
         self.processbutton = QPushButton("Process", self)
-        self.processbutton.setToolTip('Processes Wav file')
         self.processbutton.clicked.connect(self.process)
+        self.processbutton.setFixedWidth(self.colwidth)
+        self.processbutton.setEnabled(False)
 
         # about
         self.aboutbutton = QPushButton("About", self)
         self.aboutbutton.clicked.connect(self.aboutdialog)
+        self.aboutbutton.setFixedWidth(self.colwidth)
 
     def initsliders(self):
         # initialize Sliders and labels
+        self.labelbox = QLabel(self)
+        self.labelbox.setText('')
+        self.labelbox.setWordWrap(True)
+        self.labelbox.setAlignment(Qt.AlignRight)
         # factor
         self.factorslider = QSlider(Qt.Horizontal)
         self.factorslider.setMinimum(-100)
         self.factorslider.setMaximum(100)
         self.factorslider.setValue(1)
         self.factorslider.valueChanged.connect(self.factor)
-        self.factorlabel = QLabel('Factor:\n1')
-        self.factorlabel.setFixedWidth(self.colwidth)
+        self.factorlabel = QLabel('1')
         self.factorlabel.setAlignment(Qt.AlignRight)
+        # self.factorlabel.setFixedWidth(self.colwidth)
 
         # buffer
         self.bufslider = QSlider(Qt.Horizontal)
@@ -185,9 +186,9 @@ class App(QWidget):
         self.bufslider.setValue(0)
         self.bufslider.setSingleStep(1)
         self.bufslider.valueChanged.connect(self.buf)
-        self.buflabel = QLabel('Buffer:\n0.0')
-        self.buflabel.setFixedWidth(self.colwidth)
+        self.buflabel = QLabel('0')
         self.buflabel.setAlignment(Qt.AlignRight)
+        # self.buflabel.setFixedWidth(self.colwidth)
 
         # offset
         self.offsetslider = QSlider(Qt.Horizontal)
@@ -196,9 +197,9 @@ class App(QWidget):
         self.offsetslider.setValue(0)
         self.offsetslider.setSingleStep(1)
         self.offsetslider.valueChanged.connect(self.offset)
-        self.offsetlabel = QLabel('Offset:\n0.0')
-        self.offsetlabel.setFixedWidth(self.colwidth)
+        self.offsetlabel = QLabel('0')
         self.offsetlabel.setAlignment(Qt.AlignRight)
+        # self.offsetlabel.setFixedWidth(self.colwidth)
 
         # startpoint
         self.startslider = QSlider(Qt.Horizontal)
@@ -207,9 +208,9 @@ class App(QWidget):
         self.startslider.setValue(0)
         self.startslider.setSingleStep(1)
         self.startslider.valueChanged.connect(self.start)
-        self.startlabel = QLabel('Start:\n0')
-        self.startlabel.setFixedWidth(self.colwidth)
+        self.startlabel = QLabel('0')
         self.startlabel.setAlignment(Qt.AlignRight)
+        # self.startlabel.setFixedWidth(self.colwidth)
 
         # endpoint
         self.endslider = QSlider(Qt.Horizontal)
@@ -218,9 +219,9 @@ class App(QWidget):
         self.endslider.setValue(99)
         self.endslider.setSingleStep(1)
         self.endslider.valueChanged.connect(self.end)
-        self.endlabel = QLabel('End:\n99')
-        self.endlabel.setFixedWidth(self.colwidth)
+        self.endlabel = QLabel('99')
         self.endlabel.setAlignment(Qt.AlignRight)
+        # self.endlabel.setFixedWidth(self.colwidth)
 
         # max size
         self.maxslidermin = QSlider(Qt.Horizontal)
@@ -229,59 +230,73 @@ class App(QWidget):
         self.maxslidermin.setValue(0)
         self.maxslidermin.setSingleStep(1)
         self.maxslidermin.valueChanged.connect(self.max)
+        self.maxslidermin.setFixedWidth(self.colwidth)
         self.maxslidersec = QSlider(Qt.Horizontal)
         self.maxslidersec.setMinimum(0)
         self.maxslidersec.setMaximum(5999)
         self.maxslidersec.setValue(99)
         self.maxslidersec.setSingleStep(1)
         self.maxslidersec.valueChanged.connect(self.max)
-        self.maxlabel = QLabel('Max Length:\n0 min 0.99 sec')
-        self.maxlabel.setFixedWidth(self.colwidth)
-        self.maxlabel.setAlignment(Qt.AlignRight)
+        self.maxslidersec.setFixedWidth(self.colwidth)
+        self.maxlabel = QLabel('Max Length: 0 min 0.99 sec')
+        # self.maxlabel.setFixedWidth(self.colwidth)
+        self.inputbox = QLineEdit(self)
+        self.inputbox.setMaxLength(7)
+        self.inputbox.setFixedWidth(self.colwidth)
+        self.inputbox.textChanged.connect(self.processString)
+        self.inputbox.setFocusPolicy(Qt.StrongFocus)
+        self.inputbox.editingFinished.connect(self.process)
 
         # loaded filename display
-        self.filelabel = QLabel("\n\n")
+        self.filelabel = QLabel('No File Loaded.')
+        self.filelabel.setAlignment(Qt.AlignRight)
+
+        # status
+        self.statuslabel = QLabel('')
+        self.statuslabel.setWordWrap(True)
+        self.statuslabel.setAlignment(Qt.AlignRight)
+
 
     def open_webbrowser(self):
         # func to open website
         webbrowser.open('http://alexiansmith.com')
-
+##########################################
     def factor(self):
         # func for factor slider
-        self.update()
-        self.factor_value = self.factorslider.value()
-        self.factorlabel.setText('Factor:\n' + str(self.factor_value))
+        # self.update()
+        # self.factor_value = self.factorslider.value()
+        self.factorlabel.setText(str(self.factor_value))
 
     def buf(self):
         # func for buffer slider
-        self.update()
-        self.buffer_value = float(self.bufslider.value()/1000)
-        self.buflabel.setText('Buffer:\n' + str(self.buffer_value))
+        # self.update()
+        # self.buffer_value = float(self.bufslider.value()/1000)
+        self.buflabel.setText(str(self.buffer_value))
 
     def offset(self):
         # func for offset slider
-        self.offset_value = float(self.offsetslider.value()/1000)
-        self.offsetlabel.setText('Offset:\n' + str(self.offset_value))
+        # self.offset_value = float(self.offsetslider.value()/1000)
+        self.offsetlabel.setText(str(self.offset_value))
 
     def start(self):
         # func for start slider
-        self.start_value = self.startslider.value()
-        self.startlabel.setText('Start:\n' + str(self.start_value))
+        # self.start_value = self.startslider.value()
+        self.startlabel.setText(str(self.start_value))
 
     def end(self):
         # func for end slider
-        self.end_value = self.endslider.value()
-        self.endlabel.setText('End:\n' + str(self.end_value))
+        # self.end_value = self.endslider.value()
+        self.endlabel.setText(str(self.end_value))
 
     def max(self):
         # func for max sliders
         min = int(self.maxslidermin.value())
         sec = float((self.maxslidersec.value())/100)
         self.max_value = (min + sec/60)
-        self.maxlabel.setText(f"Max Length:\n{str(min)} min {str(sec)} sec")
+        self.maxlabel.setText(f"Max Length: {str(min)} min {str(sec)} sec")
         if self.max_value > 1.5:
             # warning about longer outputs
-            self.onButtonClick("Careful! more than a couple minutes can take A LOT of time and computer resources to process")
+            self.onButtonClick("Careful! Long Wav Files have Long Process Times!")
         else:
             self.onButtonClick('')
 
@@ -293,10 +308,12 @@ class App(QWidget):
             self.fs = wavein.rate
             self.swidth = wavein.sampwidth
             # updates file label
-            self.filelabel.setText("File Loaded:\n" + ntpath.basename(self.filename))
-            self.filelabel.setAlignment(Qt.AlignRight)
+            self.filelabel.setText("File Loaded: " + ntpath.basename(self.filename))
+            self.onButtonClick(f"{ntpath.basename(self.filename)} loaded")
+            self.processbutton.setEnabled(True)
         except:
             self.onButtonClick("Couldn't load wav file")
+            self.setprocessbutton.setenabled(False)
 
     def randomize(self):
         # randomizes values
@@ -315,15 +332,105 @@ class App(QWidget):
         self.endslider.setValue(self.e)
         self.update()
 
-    def process(self):
-        # Process button clicked
-        if self.start_value > self.end_value:
-            self.onButtonClick("Startpoint cannot be larger than Endpoint")
+    def processString(self):
+        string = self.inputbox.text()
+        # ensure wave data is loaded
+        if isinstance(self.data, int):
+            self.onButtonClick('')
+        if len(string) < 1:
+            self.onButtonClick('')
+            self.factor_value = 1
+            self.buffer_value = 0
+            self.offset_value = 0
+            self.start_value = 0
+            self.end_value = 99
+            self.save_filename = 'untitled'
+            # self.buf()
+            # self.factor()
+            # self.offset()
+            # self.start()
+            # self.end()
+            self.labelbox.setText('')
         else:
-            # update status label
-            self.onButtonClick("Processing...   STR will be unresponsive until Process completes")
-            self.processClick()     # call processClick function to process data
-            self.update()
+            # process string input
+            if len(string) < 7:
+                string = string * 7
+            string = string[0:7]
+            self.save_filename = string
+            self.num_string = list()
+            for i in range(len(string)):
+                # adjust values so range is 0 - 8836
+                if i == (len(string) - 1):
+                    # self.num_string.append(ord(string[i]) - 33) * (ord(string[0]) - 33)
+                    a = ord(string[i]) - 32
+                    b = ord(string[0]) - 32
+                    self.num_string.append(a * b)
+                else:
+                    # self.num_string.append(ord(string[i]) - 33) * (ord(string[i+1]) - 33)
+                    a = ord(string[i]) - 32
+                    b = ord(string[-1]) - 32
+                    self.num_string.append(a * b)
+            self.num_string[1] = (ord(string[1]) - 32) * (ord(string[2]) - 32)
+            self.num_string[2] = (ord(string[2]) - 32) * (ord(string[0]) - 32)
+
+            print("self.num_string list:\n", self.num_string)
+
+            # calculate Params from string
+            self.factor_value = (ord(string[0]) - 32) - 47    # constrain -47 - 47
+            print("factor", self.factor_value)
+            self.factor()
+            if self.num_string[1] == 0:
+                bufsize_infine = 0
+            else:
+                bufsize_infine = self.num_string[1] / 9025.0 # constrain to 0 - 1
+            print("bufsize_infine", bufsize_infine)
+            if self.num_string[2] == 0:
+                self.buffer_value = 0
+            else:
+                self.buffer_value = bufsize_infine + (self.num_string[2] / 90.25) # constrain to 0 - 99
+            print("buffer", self.buffer_value)
+            self.buf()
+            offset_fine = self.num_string[3] / 88360.0   # constrain 0 - 0.1
+            print("offset_fine", offset_fine)
+            self.offset_value = offset_fine + self.num_string[4] / 90.25  # constrain 0 - 99
+            print("self.offset_value", self.offset_value)
+            self.offset()
+            self.start_value = 0
+            self.end_value = 99
+            self.start_value = int(self.num_string[5] / 90.25)    # constrain to 0 - 99
+            print("self.startvalue", self.start_value)
+            self.end_value = int(99 - self.num_string[6] / 90.25)
+            print("self.end_value", self.end_value)
+            if self.end_value > 98:
+                while self.start_value >= self.end_value:
+                    self.start_value = self.start_value - 1
+            else:
+                if self.start_value >= self.end_value:
+                    for i in range(len(string)):
+                        self.end_value = int(99 - self.num_string[i] / 90.25)
+                        if self.end_value > self.start_value:
+                            break
+                while self.start_value >= self.end_value:
+                    self.end_value = self.end_value + 1
+            self.start()
+            self.end()
+            self.labelbox.setText(f"{self.num_string} {self.factor_value} {self.buffer_value} {self.offset_value} {self.start_value} {self.end_value} ")
+
+
+    def process(self):
+        # (self.data, self.fs, self.factor_value, self.buffer_value,
+        # self.offset_value, self.start_value, self.end_value, self.max_value)
+        # Process button clicked
+        if isinstance(self.data, int):
+            self.onButtonClick('Nothing to process, load a wav file first')
+        elif isinstance(self.data, numpy.ndarray):
+            if self.start_value >= self.end_value:
+                self.onButtonClick("Startpoint cannot be larger than Endpoint")
+            else:
+                # update status label
+                self.onButtonClick("Processing... STR will be unresponsive untill process is complete")
+                self.processClick()     # call processClick function to process data
+                self.update()
 
     def revert_processing(self):
         # resets status label when processing is complete
@@ -331,8 +438,6 @@ class App(QWidget):
 
     def save(self):
         # saves processed data to a wave file
-
-
         try:
             wavio.write(self.save_filename, self.write_data, self.write_fs)
             # status label readout
@@ -348,6 +453,7 @@ class App(QWidget):
         self.filename, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()","",home,"Wav Files (*.wav)")
         if self.filename:
             self.open()
+
 
     def ReadMe(self):
         # opens readme in a text editor
@@ -365,7 +471,7 @@ class App(QWidget):
         b3 = QPushButton("ReadMe")
         b3.clicked.connect(self.ReadMe)
         # fix this so it just reads the selected lines from the readme file
-        l1 = QLabel("STR is an application for manipulating '.wav' files\nfor creative and sometimes unexpected results\n\n © Alex Ian Smith 2019\n\n")
+        l1 = QLabel("1. Open wave file\n2. Type something in text box\n3. Process\n\n © Alex Ian Smith 2019\n\n")
 
         # add buttons & labels to layout
         abt = QVBoxLayout()
@@ -384,13 +490,18 @@ class App(QWidget):
     def saveFileDialog(self):
         # opens save file dialog
         try:
-            if self.write_fs:
+            if self.write_fs and self.save_filename != 0:
                 # options = QFileDialog.Options()
                 # options |= QFileDialog.DontUseNativeDialog
                 home = str(Path.home())
-                self.save_filename, _ = QFileDialog.getSaveFileName(self,"Save","",home,"Wav Files (*.wav)")
+                while True:
+                    if os.path.isfile(self.save_filename + '.wav') == 1:
+                        self.save_filename = self.save_filename + '0'
+                        # self.save_filename, _ = QFileDialog.getSaveFileName(self,"Save","",home,"Wav Files (*.wav)")
+                    else:
+                        break
+                self.save_filename = self.save_filename + '.wav'
                 if self.save_filename:
-                    # pass # print(self.save_filename)
                     self.save()
         except:
             self.onButtonClick("Nothing to save. Process something first")
